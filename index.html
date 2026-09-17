@@ -433,7 +433,7 @@ footer.attrib{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);
       </div>
 
       <div class="set-group"><h3>התראות</h3><div class="set-card">
-        <div class="set-row"><span class="s-ic" data-ic="bell"></span><div class="s-main"><div class="s-title">תזכורת יומית</div><div class="s-sub">קבלו תזכורת להתחלת לימוד יומי</div></div><span class="switch"><input type="checkbox" id="setReminder" checked><span class="tr"></span></span></div>
+        <div class="set-row"><span class="s-ic" data-ic="bell"></span><div class="s-main"><div class="s-title">תזכורת יומית</div><div class="s-sub">קבלו תזכורת להתחלת לימוד יומי</div></div><span class="switch"><input type="checkbox" id="setReminder"><span class="tr"></span></span></div>
         <div class="set-row"><span class="s-ic" data-ic="clock"></span><div class="s-main"><div class="s-title">שעת לימוד</div><div class="s-sub" id="studyTimeVal">20:00</div></div><span class="chev">‹</span></div>
         <div class="set-row"><span class="s-ic" data-ic="music"></span><div class="s-main"><div class="s-title">צלילים</div><div class="s-sub">השמעת צליל בהתראות</div></div><span class="switch"><input type="checkbox" id="setSounds" checked><span class="tr"></span></span></div>
       </div></div>
@@ -459,7 +459,7 @@ footer.attrib{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);
       </div></div>
 
       <button class="logout-row" id="logoutBtn" type="button">⇦ התנתקות</button>
-      <p class="quote-band" style="font-style:normal;font-family:'Noto Sans Hebrew',sans-serif;font-size:12px" id="verLine">קביעותא · תצוגת מקדימה</p>
+      <p class="quote-band" style="font-style:normal;font-family:'Noto Sans Hebrew',sans-serif;font-size:12px" id="verLine">קביעותא · לימוד יומי</p>
     </div>
   </section>
 
@@ -493,7 +493,7 @@ footer.attrib{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);
 <div class="save-error" id="saveError" hidden role="alert"><span>לא הצלחנו לשמור את המקום. נשארנו כאן.</span><button type="button" id="retryHome">לנסות שוב</button></div>
 <div class="toast" id="toast" role="status"></div>
 
-<div id="demoBanner" style="position:fixed;bottom:calc(64px + env(safe-area-inset-bottom,0px) + 8px);left:50%;transform:translateX(-50%);z-index:40;background:#14261f;color:#f5efe2;font:12px 'Noto Sans Hebrew',sans-serif;padding:5px 14px;border-radius:99px;opacity:.92;pointer-events:none;white-space:nowrap">דמו · תצוגה מקדימה — נתונים להדגמה בלבד</div>
+<script src="https://unpkg.com/@descope/web-js-sdk@1.53.1/dist/index.umd.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

@@ -1,6 +1,80 @@
-/* demo build: static preview, no auth backend */
-const getUser=async()=>({id:'demo',name:'אורח',email:'',pictureUrl:''})
-const logout=async()=>{}
+/* Keviata live build: Descope Google auth + Supabase persistence */
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+const DESCOPE_PID='P3JSQ5xGjXf4sEVQz7q0lTaAgN54'
+const SB_URL='https://kuehljnnpwgzyodjaund.supabase.co'
+const SB_KEY='sb_publishable_WTptxyj36qwJLQRibOW3-w_sw4kFowj'
+const EXCHANGE_URL=SB_URL+'/functions/v1/descope-exchange'
+const VAPID_PUBLIC='BFERPntN4swt6boOnhiOy1nQ02qKTWB2R2aCQKeWNiZBtRNKtu3JHBjNRzmek4lAYZYWgGZiO75BOAmIJ2NOPoc'
+const dSdk=Descope({projectId:DESCOPE_PID})
+let uid=null
+
+let sbToken='',sbTokenExpMs=0
+async function getSBToken(){
+  if(sbToken&&Date.now()<sbTokenExpMs-120000)return sbToken
+  const r0=await dSdk.refresh()
+  const sessionJwt=r0&&r0.data&&r0.data.sessionJwt
+  if(!sessionJwt)throw Error('no_session')
+  const r=await fetch(EXCHANGE_URL,{method:'POST',headers:{authorization:'Bearer '+sessionJwt}})
+  if(!r.ok)throw Error('exchange_'+r.status)
+  const j=await r.json()
+  sbToken=j.token;sbTokenExpMs=j.exp*1000
+  return sbToken
+}
+const sb=createClient(SB_URL,SB_KEY,{accessToken:getSBToken})
+
+const getUser=async()=>{
+  try{
+    const r=await dSdk.refresh()
+    if(!r||!r.data||!r.data.sessionJwt)return null
+    const me=await dSdk.me()
+    const u=(me&&me.data)||{}
+    uid=u.userId||null
+    return uid?{id:uid,name:u.name||(u.email||'').split('@')[0]||'לומד/ת',email:u.email||'',pictureUrl:u.picture||''}:null
+  }catch{return null}
+}
+const logout=async()=>{
+  try{await dSdk.logout()}catch{}
+  try{localStorage.removeItem('keviata-demo-progress');localStorage.removeItem('keviata-demo-extras')}catch{}
+  location.replace('login/')
+}
+async function cloudLoad(){
+  if(!uid)return
+  try{
+    await sb.from('profiles').upsert({id:uid,display_name:profile.name,email:profile.email,picture_url:profile.pictureUrl,updated_at:new Date().toISOString()})
+    const st=await sb.from('user_settings').select('settings').eq('user_id',uid).maybeSingle()
+    const pr=await sb.from('user_progress').select('item_key,completed,data')
+    const s=st.data&&st.data.settings
+    if(s){if(s.bookmarks)extras.bookmarks=s.bookmarks;if(s.settings)extras.settings={...extras.settings,...s.settings};if(s.onboarded)extras.onboarded=true}
+    if(pr.data&&pr.data.length){progress.days={}
+      for(const row of pr.data){const d=row.data||{};progress.days[row.item_key]={dayId:row.item_key,slide:Number(d.slide)||0,totalSlides:Number(d.totalSlides)||20,scroll:Number(d.scroll)||0,completed:!!row.completed,updatedAt:d.updatedAt||''}}
+      progress.streak=Object.values(progress.days).filter(d=>d&&d.completed).length
+      try{localStorage.setItem('keviata-demo-progress',JSON.stringify({progress,profile}))}catch{}}
+  }catch(e){console.warn('cloud load failed',e)}
+}
+let cloudTimer
+function cloudSaveSettings(){clearTimeout(cloudTimer);cloudTimer=setTimeout(async()=>{if(!uid)return
+  try{await sb.from('user_settings').upsert({user_id:uid,settings:{bookmarks:extras.bookmarks,settings:extras.settings,onboarded:extras.onboarded},updated_at:new Date().toISOString()})}catch(e){console.warn('settings save failed',e)}},800)}
+async function cloudSaveProgress(dayId){
+  if(!uid)return
+  const d=progress.days[dayId];if(!d)return
+  try{await sb.from('user_progress').upsert({user_id:uid,item_key:dayId,completed:!!d.completed,completed_at:d.completed?new Date().toISOString():null,data:{slide:d.slide,totalSlides:d.totalSlides,scroll:d.scroll,updatedAt:d.updatedAt}})}catch(e){console.warn('progress save failed',e)}
+}
+function b64ToUint8(b64){const p='='.repeat((4-b64.length%4)%4);const raw=atob((b64+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
+async function pushEnable(){
+  if(!uid||!('serviceWorker' in navigator)||!('PushManager' in window))return false
+  const perm=await Notification.requestPermission()
+  if(perm!=='granted')return false
+  const reg=await navigator.serviceWorker.ready
+  const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToUint8(VAPID_PUBLIC)})
+  const j=sub.toJSON()
+  try{await sb.from('push_subscriptions').upsert({user_id:uid,endpoint:j.endpoint,keys:j.keys,opted_in:true,timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})}catch(e){console.warn('push save failed',e)}
+  return true
+}
+async function pushDisable(){
+  try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription()
+    if(sub){await sub.unsubscribe();if(uid)await sb.from('push_subscriptions').delete().eq('endpoint',sub.endpoint)}}catch{}
+}
 
 const $=id=>document.getElementById(id)
 const track=$('track'),stage=$('stage'),counter=$('counter'),fill=$('fill'),prevBtn=$('prevBtn'),nextBtn=$('nextBtn')
@@ -8,7 +82,7 @@ const reader=$('reader'),saveError=$('saveError'),toast=$('toast')
 
 let edition=null,archive=[],slides=[],N=0,idx=0
 let progress={version:1,days:{},streak:0,lastStudyDate:null}
-let extras={version:1,bookmarks:[],settings:{reminder:true,studyTime:'20:00',sounds:true,dark:false,textSize:'בינוני'}}
+let extras={version:1,bookmarks:[],settings:{reminder:false,studyTime:'20:00',sounds:true,dark:false,textSize:'בינוני'},onboarded:false}
 let profile={name:'אורח',pictureUrl:'',email:''}
 let saveTimer,deferredInstall,restoring=false,currentTab='home'
 const requestedDay=new URLSearchParams(location.search).get('date')
@@ -60,7 +134,7 @@ $('goProfile').onclick=()=>showTab('profile')
 async function getContent(){const day=requestedDay||'2026-09-17';const r=await fetch('content/'+encodeURIComponent(day)+'.json');if(!r.ok)throw Error('content');return r.json()}
 async function getArchive(){archive=edition?[edition]:[]}
 async function getExtras(){try{const d=JSON.parse(localStorage.getItem('keviata-demo-extras')||'null');if(d&&d.extras)extras={...extras,...d.extras,settings:{...extras.settings,...(d.extras.settings||{})}}}catch{}}
-async function putExtras(){try{localStorage.setItem('keviata-demo-extras',JSON.stringify({extras}))}catch{}}
+async function putExtras(){try{localStorage.setItem('keviata-demo-extras',JSON.stringify({extras}))}catch{}cloudSaveSettings()}
 
 /* ---------- derived stats ---------- */
 const dayEntries=()=>Object.entries(progress.days||{}).sort((a,b)=>String(b[1].updatedAt).localeCompare(String(a[1].updatedAt)))
@@ -194,7 +268,10 @@ body.dark nav.tabs,body.dark .reader,body.dark .reader-top,body.dark .reader-nav
 body.dark .ed-date{background:#17211c;color:#e9e4d6}
 body.dark .bar{background:#33463a}
 body.dark .mini-bar,body.dark .g-bar{background:#33463a}`;document.head.append(darkStyle)}
-$('setReminder').onchange=e=>{extras.settings.reminder=e.target.checked;putExtras();showToast(e.target.checked?'התזכורת היומית הופעלה':'התזכורת כבויה')}
+$('setReminder').onchange=async e=>{
+  if(e.target.checked){const ok=await pushEnable();if(!ok){e.target.checked=false;extras.settings.reminder=false;putExtras();showToast('לא התקבלה הרשאה להתראות במכשיר');return}
+    extras.settings.reminder=true;putExtras();showToast('התזכורת היומית הופעלה')}
+  else{await pushDisable();extras.settings.reminder=false;putExtras();showToast('התזכורת כבויה')}}
 $('setSounds').onchange=e=>{extras.settings.sounds=e.target.checked;putExtras()}
 $('setDark').onchange=e=>{extras.settings.dark=e.target.checked;ensureDark();applySettings();putExtras()}
 document.querySelector('#scr-settings .set-row:nth-child(2)').onclick=()=>{const opts=['07:00','12:00','18:00','20:00','21:30'];const cur=extras.settings.studyTime||'20:00';const next=opts[(opts.indexOf(cur)+1)%opts.length];extras.settings.studyTime=next;applySettings();putExtras();showToast('שעת הלימוד: '+next)}
@@ -215,12 +292,30 @@ function openPrivacy(){const dlg=document.createElement('div');dlg.className='dl
   dlg.onclick=e=>{if(e.target===dlg)dlg.remove()}
   dlg.querySelector('#dlgDelete').onclick=async()=>{if(!confirm('למחוק את החשבון ואת כל ההתקדמות לצמיתות? אין אפשרות שחזור.'))return
     const st=dlg.querySelector('#dlgStatus');st.textContent='מוחקים את החשבון…'
-    try{localStorage.removeItem('keviata-demo-progress');localStorage.removeItem('keviata-demo-extras');location.replace('./')}catch{st.textContent='המחיקה לא הושלמה. נסו שוב.'}}}
+    try{
+      if(uid){for(const t of ['push_subscriptions','email_subscriptions','user_history','user_progress','user_settings'])await sb.from(t).delete().eq('user_id',uid)
+        await sb.from('profiles').delete().eq('id',uid)}
+      try{localStorage.removeItem('keviata-demo-progress');localStorage.removeItem('keviata-demo-extras')}catch{}
+      await logout();location.replace('./')}catch(e){console.warn('delete failed',e);st.textContent='המחיקה לא הושלמה. נסו שוב.'}}}
 
 /* ---------- email opt-in ---------- */
-async function loadEmailPref(){$('emailStatus').textContent='לא פעיל בתצוגת הדמו'}
+async function loadEmailPref(){
+  if(!uid){$('emailStatus').textContent='לא מנוי';return}
+  try{const r=await sb.from('email_subscriptions').select('subscribed').eq('user_id',uid).maybeSingle()
+    const on=!!(r.data&&r.data.subscribed)
+    $('emailOptin').checked=on
+    $('emailStatus').textContent=on?'מנוי':'לא מנוי'}catch{$('emailStatus').textContent='לא מנוי'}
+}
 $('emailOptin').onchange=()=>{$('emailSave').disabled=false}
-$('emailSave').onclick=async()=>{$('emailSave').disabled=true;showToast('הדיוור אינו פעיל בתצוגת הדמו');setTimeout(()=>{$('emailSave').disabled=false},800)}
+$('emailSave').onclick=async()=>{
+  if(!uid)return
+  const on=$('emailOptin').checked
+  $('emailSave').disabled=true
+  try{await sb.from('email_subscriptions').upsert({user_id:uid,email:profile.email,subscribed:on,timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})
+    $('emailStatus').textContent=on?'מנוי':'לא מנוי'
+    showToast(on?'הדיוור הופעל':'הדיוור בוטל')}catch{showToast('השמירה נכשלה. נסו שוב.')}
+  $('emailSave').disabled=true
+}
 
 /* ---------- reader (swipe flow, preserved) ---------- */
 function safeSlides(record){if(!record||!/^\d{4}-\d{2}-\d{2}$/.test(record.id)||!Array.isArray(record.slides)||record.slides.length!==20)throw Error('invalid_content');return record.slides}
@@ -252,6 +347,7 @@ async function save(){if(!edition)return false;const el=slides[idx],scroll=el&&e
   progress.days[edition.id]={...prev,dayId:edition.id,slide:Math.max(Number(prev.slide)||0,idx),totalSlides:N,scroll,completed:prev.completed||idx>=N-1,updatedAt:new Date().toISOString()}
   progress.streak=Object.values(progress.days).filter(d=>d&&d.completed).length
   try{localStorage.setItem('keviata-demo-progress',JSON.stringify({progress,profile}))}catch{}
+  cloudSaveProgress(edition.id)
   return true}
 function queueSave(){if(restoring||!edition)return;clearTimeout(saveTimer);saveTimer=setTimeout(()=>save(),650)}
 stage.addEventListener('scroll',queueSave,true)
@@ -262,6 +358,38 @@ $('readerHome').onclick=saveThenHome;$('retryHome').onclick=saveThenHome
 document.addEventListener('click',async e=>{if(e.target?.id==='finishBtn'){const finishBtn=e.target,finishStatus=$('finishStatus');finishBtn.disabled=true;finishStatus.textContent='שומרים את ההשלמה…'
   const ok=await save();if(!ok){finishBtn.disabled=false;finishStatus.textContent=navigator.onLine?'לא הצלחנו לשמור. נסה שוב.':'אין חיבור. נחזור לשמור כשהרשת תחזור.';return}
   finishStatus.textContent='נשמר.';closeReader()}})
+
+/* ---------- first-run onboarding: explicit opt-ins ---------- */
+function openOnboarding(){
+  if(extras.onboarded)return
+  const dlg=document.createElement('div');dlg.className='dlg';dlg.innerHTML=`<div class="dlg-card"><h2>מה תרצו לקבל?</h2>
+  <p>אפשר להשתמש בקביעותא גם בלי שום התראה. כל אישור כאן נפרד, ואפשר לבטל אותו בכל רגע בהגדרות.</p>
+  <div class="consent-row" style="text-align:right"><input type="checkbox" id="obEmail"><label for="obEmail">אני מאשר/ת לקבל במייל (${esc(profile.email||'')}) את הדף היומי, פעם ביום בלבד. אפשר לבטל בכל רגע.</label></div>
+  <div class="consent-row" style="text-align:right"><input type="checkbox" id="obPush"><label for="obPush">אני מאשר/ת תזכורת יומית בהתראות למכשיר הזה. אפשר לבטל בכל רגע.</label></div>
+  <div class="dlg-actions"><button class="btn" id="obSave" style="flex:1">שמירת הבחירות</button></div>
+  <div class="dlg-actions"><button class="btn soft" id="obSkip" style="flex:1">להמשיך בלי התראות</button></div>
+  <p class="finish-status" id="obStatus"></p></div>`
+  document.body.append(dlg)
+  const done=async(withSubs)=>{
+    const st=dlg.querySelector('#obStatus')
+    if(withSubs){
+      st.textContent='שומרים…'
+      try{
+        if(dlg.querySelector('#obEmail').checked){
+          await sb.from('email_subscriptions').upsert({user_id:uid,email:profile.email,subscribed:true,timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})
+          $('emailOptin').checked=true;$('emailStatus').textContent='מנוי'}
+        if(dlg.querySelector('#obPush').checked){
+          const ok=await pushEnable()
+          if(ok){extras.settings.reminder=true;$('setReminder').checked=true}
+          else showToast('המכשיר לא אישר התראות. אפשר להפעיל מאוחר יותר בהגדרות')}
+      }catch{st.textContent='חלק מהשמירה נכשל. אפשר לנסות שוב מההגדרות.'}}
+    extras.onboarded=true
+    putExtras()
+    dlg.remove()
+  }
+  dlg.querySelector('#obSave').onclick=()=>done(true)
+  dlg.querySelector('#obSkip').onclick=()=>done(false)
+}
 
 /* ---------- boot ---------- */
 async function load(){
@@ -289,4 +417,6 @@ function network(){offlineBanner.hidden=navigator.onLine}
 addEventListener('online',()=>{network();save()});addEventListener('offline',network);network()
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('installRow').hidden=false})
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))
-const u=await getUser();if(!u)location.replace('login/');else load()
+const u=await getUser();if(!u)location.replace('login/');else{profile={name:u.name,email:u.email,pictureUrl:u.pictureUrl};load();cloudLoad().then(()=>{renderHome();renderLearn();renderProfile();applySettings();setTimeout(openOnboarding,600)})}
+
+$('logoutBtn').onclick=logout
