@@ -517,6 +517,9 @@ async function load(){
 function network(){offlineBanner.hidden=navigator.onLine}
 addEventListener('online',()=>{network();save()});addEventListener('offline',network);network()
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshPushStatuses()})
+document.addEventListener('gesturestart',e=>e.preventDefault())
+document.addEventListener('gesturechange',e=>e.preventDefault())
+
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('installRow').hidden=false})
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}))
 $('logoutBtn').onclick=logout
