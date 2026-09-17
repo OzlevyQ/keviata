@@ -26,16 +26,21 @@ const sdkRefresh=()=>{
 }
 
 let sbToken='',sbTokenExpMs=0
+/* never throw from a custom accessToken: supabase-js retries thrown token
+   callbacks with ~8s backoff, stalling every REST call. Return the anon key
+   on failure instead so calls fail fast under RLS and the app keeps working. */
 async function getSBToken(){
   if(sbToken&&Date.now()<sbTokenExpMs-120000)return sbToken
-  const r0=await sdkRefresh()
-  const sessionJwt=r0&&r0.data&&r0.data.sessionJwt
-  if(!sessionJwt)throw Error('no_session')
-  const r=await fetch(EXCHANGE_URL,{method:'POST',headers:{authorization:'Bearer '+sessionJwt}})
-  if(!r.ok)throw Error('exchange_'+r.status)
-  const j=await r.json()
-  sbToken=j.token;sbTokenExpMs=j.exp*1000
-  return sbToken
+  try{
+    const r0=await sdkRefresh()
+    const sessionJwt=r0&&r0.data&&r0.data.sessionJwt
+    if(!sessionJwt)return SB_KEY
+    const r=await fetch(EXCHANGE_URL,{method:'POST',headers:{authorization:'Bearer '+sessionJwt}})
+    if(!r.ok)throw Error('exchange_'+r.status)
+    const j=await r.json()
+    sbToken=j.token;sbTokenExpMs=j.exp*1000
+    return sbToken
+  }catch(e){console.warn('token exchange failed, sync disabled for now',e);return SB_KEY}
 }
 const sb=createClient(SB_URL,SB_KEY,{accessToken:getSBToken})
 
@@ -425,7 +430,7 @@ async function load(){
     const record=await getContent()
     mount(record)
     try{const d=JSON.parse(localStorage.getItem('keviata-demo-progress')||'null');if(d&&d.progress)progress=d.progress;if(d&&d.profile&&!uid)profile=d.profile}catch{}
-    await Promise.all([getArchive(),getExtras(),loadEmailPref()])
+    await Promise.race([Promise.all([getArchive(),getExtras(),loadEmailPref()]),new Promise(r=>setTimeout(r,4000))])
     const d=progress.days?.[edition.id]
     if(d)idx=Math.max(0,Math.min(N-1,Number(d.slide)||0))
     restoring=true;render()
