@@ -96,13 +96,32 @@ async function cloudSaveProgress(dayId){
 function b64ToUint8(b64){const p='='.repeat((4-b64.length%4)%4);const raw=atob((b64+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
 async function pushEnable(){
   if(!uid||!('serviceWorker' in navigator)||!('PushManager' in window))return false
-  const perm=await Notification.requestPermission()
-  if(perm!=='granted')return false
-  const reg=await navigator.serviceWorker.ready
-  const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToUint8(VAPID_PUBLIC)})
-  const j=sub.toJSON()
-  try{await sb.from('push_subscriptions').upsert({user_id:uid,endpoint:j.endpoint,keys:j.keys,opted_in:true,timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})}catch(e){console.warn('push save failed',e)}
-  return true
+  try{
+    const perm=await Notification.requestPermission()
+    if(perm!=='granted')return false
+    const reg=await navigator.serviceWorker.ready
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToUint8(VAPID_PUBLIC)})
+    const j=sub.toJSON()
+    try{await sb.from('push_subscriptions').upsert({user_id:uid,endpoint:j.endpoint,keys:j.keys,opted_in:true,timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})}catch(e){console.warn('push save failed',e)}
+    return true
+  }catch(e){console.warn('push enable failed',e);return false}
+}
+/* truthful reminder status: default = לא אושר, granted+on = מופעל, granted+off = כבוי,
+   denied = חסום במכשיר, unsupported = לא נתמך. Never show enabled without a real
+   granted permission and a live subscription. */
+async function refreshReminderStatus(){
+  const el=$('reminderStatus');if(!el)return
+  if(!('Notification' in window)||!('PushManager' in window)||!('serviceWorker' in navigator)){el.textContent='לא נתמך במכשיר';if(extras.settings.reminder){extras.settings.reminder=false;$('setReminder').checked=false;putExtras()}return}
+  const perm=Notification.permission
+  if(perm==='denied'){el.textContent='חסום במכשיר';return}
+  if(perm==='default'){el.textContent='לא אושר';return}
+  try{
+    const reg=await navigator.serviceWorker.ready
+    const sub=await reg.pushManager.getSubscription()
+    if(extras.settings.reminder&&sub){el.textContent='מופעל';return}
+    if(extras.settings.reminder&&!sub){extras.settings.reminder=false;$('setReminder').checked=false;putExtras();el.textContent='לא אושר';return}
+  }catch{}
+  el.textContent='כבוי'
 }
 async function pushDisable(){
   try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription()
@@ -284,7 +303,7 @@ $('achAll').onclick=e=>e.preventDefault();$('goalsAll').onclick=e=>e.preventDefa
 
 /* ---------- settings ---------- */
 function applySettings(){const s=extras.settings
-  $('setReminder').checked=!!s.reminder;$('setSounds').checked=!!s.sounds;$('setDark').checked=!!s.dark
+  $('setReminder').checked=!!s.reminder;$('setSounds').checked=!!s.sounds;$('setDark').checked=!!s.dark;refreshReminderStatus()
   $('studyTimeVal').textContent=s.studyTime||'20:00';$('textSizeVal').textContent=s.textSize||'בינוני'
   document.body.classList.toggle('dark',!!s.dark)
   document.body.style.zoom=s.textSize==='קטן'?'0.94':s.textSize==='גדול'?'1.08':'1'
@@ -302,9 +321,21 @@ body.dark .ed-date{background:#17211c;color:#e9e4d6}
 body.dark .bar{background:#33463a}
 body.dark .mini-bar,body.dark .g-bar{background:#33463a}`;document.head.append(darkStyle)}
 $('setReminder').onchange=async e=>{
-  if(e.target.checked){const ok=await pushEnable();if(!ok){e.target.checked=false;extras.settings.reminder=false;putExtras();showToast('לא התקבלה הרשאה להתראות במכשיר');return}
-    extras.settings.reminder=true;putExtras();showToast('התזכורת היומית הופעלה')}
-  else{await pushDisable();extras.settings.reminder=false;putExtras();showToast('התזכורת כבויה')}}
+  if(e.target.checked){
+    if(!('Notification' in window)||!('PushManager' in window)||!('serviceWorker' in navigator)){
+      e.target.checked=false;extras.settings.reminder=false;putExtras();refreshReminderStatus()
+      showToast('במכשיר הזה אפשר לקבל התראות רק אחרי התקנת האפליקציה למסך הבית');return}
+    if(Notification.permission==='denied'){
+      e.target.checked=false;extras.settings.reminder=false;putExtras();refreshReminderStatus()
+      showToast('ההתראות חסומות. יש לאפשר אותן בהגדרות האפליקציה או הדפדפן במכשיר, ואז לחזור לכאן');return}
+    const permBefore=Notification.permission
+    const ok=await pushEnable()
+    if(!ok){
+      e.target.checked=false;extras.settings.reminder=false;putExtras();refreshReminderStatus()
+      if(Notification.permission==='granted'&&permBefore==='granted')showToast('ההפעלה נכשלה. נסו שוב בעוד רגע')
+      return}
+    extras.settings.reminder=true;putExtras();refreshReminderStatus();showToast('התזכורת היומית הופעלה')}
+  else{await pushDisable();extras.settings.reminder=false;putExtras();refreshReminderStatus();showToast('התזכורת כבויה')}}
 $('setSounds').onchange=e=>{extras.settings.sounds=e.target.checked;putExtras()}
 $('setDark').onchange=e=>{extras.settings.dark=e.target.checked;ensureDark();applySettings();putExtras()}
 document.querySelector('#scr-settings .set-row:nth-child(2)').onclick=()=>{const opts=['07:00','12:00','18:00','20:00','21:30'];const cur=extras.settings.studyTime||'20:00';const next=opts[(opts.indexOf(cur)+1)%opts.length];extras.settings.studyTime=next;applySettings();putExtras();showToast('שעת הלימוד: '+next)}
@@ -448,6 +479,7 @@ async function load(){
 }
 function network(){offlineBanner.hidden=navigator.onLine}
 addEventListener('online',()=>{network();save()});addEventListener('offline',network);network()
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshReminderStatus()})
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('installRow').hidden=false})
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}))
 $('logoutBtn').onclick=logout
