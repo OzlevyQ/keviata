@@ -1,18 +1,34 @@
 /* Keviata live build: Descope Google auth + Supabase persistence */
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+window.__KEVIATA_BUILD='live-2'
+
+/* recover clients stuck on a mixed old-demo/new-live cache state */
+async function healMixedBuild(){
+  try{if(sessionStorage.getItem('keviata-healed'))return;sessionStorage.setItem('keviata-healed','1')}catch{}
+  try{const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}catch{}
+  try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}catch{}
+  location.reload()
+}
 
 const DESCOPE_PID='P3JSQ5xGjXf4sEVQz7q0lTaAgN54'
 const SB_URL='https://kuehljnnpwgzyodjaund.supabase.co'
 const SB_KEY='sb_publishable_WTptxyj36qwJLQRibOW3-w_sw4kFowj'
 const EXCHANGE_URL=SB_URL+'/functions/v1/descope-exchange'
 const VAPID_PUBLIC='BFERPntN4swt6boOnhiOy1nQ02qKTWB2R2aCQKeWNiZBtRNKtu3JHBjNRzmek4lAYZYWgGZiO75BOAmIJ2NOPoc'
-const dSdk=Descope({projectId:DESCOPE_PID})
+const dSdk=(()=>{try{return Descope({projectId:DESCOPE_PID,persistTokens:true})}catch(e){console.warn('descope init failed',e);return null}})()
 let uid=null
+/* rotating refresh tokens are single-use: never run two refreshes at once */
+let refreshP=null
+const sdkRefresh=()=>{
+  if(!dSdk)return Promise.resolve(null)
+  if(!refreshP)refreshP=dSdk.refresh().catch(e=>{console.warn('descope refresh failed',e);return null}).finally(()=>{refreshP=null})
+  return refreshP
+}
 
 let sbToken='',sbTokenExpMs=0
 async function getSBToken(){
   if(sbToken&&Date.now()<sbTokenExpMs-120000)return sbToken
-  const r0=await dSdk.refresh()
+  const r0=await sdkRefresh()
   const sessionJwt=r0&&r0.data&&r0.data.sessionJwt
   if(!sessionJwt)throw Error('no_session')
   const r=await fetch(EXCHANGE_URL,{method:'POST',headers:{authorization:'Bearer '+sessionJwt}})
@@ -25,16 +41,26 @@ const sb=createClient(SB_URL,SB_KEY,{accessToken:getSBToken})
 
 const getUser=async()=>{
   try{
-    const r=await dSdk.refresh()
-    if(!r||!r.data||!r.data.sessionJwt)return null
-    const me=await dSdk.me()
-    const u=(me&&me.data)||{}
-    uid=u.userId||null
-    return uid?{id:uid,name:u.name||(u.email||'').split('@')[0]||'לומד/ת',email:u.email||'',pictureUrl:u.picture||''}:null
-  }catch{return null}
+    const r=await sdkRefresh()
+    const sj=r&&r.data&&r.data.sessionJwt
+    if(!sj)return null
+    const ju=r.data.user
+    if(ju&&(ju.userId||ju.sub)){uid=ju.userId||ju.sub
+      return{id:uid,name:ju.name||(ju.email||'').split('@')[0]||'לומד/ת',email:ju.email||'',pictureUrl:ju.picture||''}}
+    try{
+      const me=await dSdk.me()
+      const u=(me&&me.data)||{}
+      uid=u.userId||null
+      if(uid)return{id:uid,name:u.name||(u.email||'').split('@')[0]||'לומד/ת',email:u.email||'',pictureUrl:u.picture||''}
+    }catch(e){console.warn('me() failed, using token claims',e)}
+    /* session is valid but profile fetch failed - keep the session, decode sub from the JWT */
+    const p=JSON.parse(atob(sj.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))
+    uid=p.sub||null
+    return uid?{id:uid,name:'לומד/ת',email:'',pictureUrl:''}:null
+  }catch(e){console.warn('getUser failed',e);return null}
 }
 const logout=async()=>{
-  try{await dSdk.logout()}catch{}
+  try{if(dSdk)await dSdk.logout()}catch{}
   try{localStorage.removeItem('keviata-demo-progress');localStorage.removeItem('keviata-demo-extras')}catch{}
   location.replace('login/')
 }
@@ -416,7 +442,12 @@ async function load(){
 function network(){offlineBanner.hidden=navigator.onLine}
 addEventListener('online',()=>{network();save()});addEventListener('offline',network);network()
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('installRow').hidden=false})
-if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))
-const u=await getUser();if(!u)location.replace('login/');else{profile={name:u.name,email:u.email,pictureUrl:u.pictureUrl};load();cloudLoad().then(()=>{renderHome();renderLearn();renderProfile();applySettings();setTimeout(openOnboarding,600)})}
-
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}))
 $('logoutBtn').onclick=logout
+if(!dSdk){healMixedBuild()}
+else{
+const u=await Promise.race([getUser(),new Promise(r=>setTimeout(()=>r('__timeout'),10000))])
+if(u==='__timeout'){console.warn('session restore timed out');showToast('בעיית חיבור - מנסים שוב');setTimeout(()=>location.reload(),2500)}
+else if(!u)location.replace('login/')
+else{profile={name:u.name,email:u.email,pictureUrl:u.pictureUrl};load();cloudLoad().then(()=>{renderHome();renderLearn();renderProfile();applySettings();setTimeout(openOnboarding,600)})}
+}

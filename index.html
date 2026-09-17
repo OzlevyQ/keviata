@@ -1,6 +1,16 @@
 <!doctype html>
 <html lang="he" dir="rtl">
-<head>
+<head><script>
+/* build-stamp self-heal: if app.js fails to boot (mixed old-demo/new-live cache), purge and reload once */
+window.__KEVIATA_HTML='live-2';
+addEventListener('load',()=>setTimeout(async()=>{
+  if(window.__KEVIATA_BUILD)return;
+  try{if(sessionStorage.getItem('keviata-healed'))return;sessionStorage.setItem('keviata-healed','1')}catch{}
+  try{const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}catch{}
+  try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}catch{}
+  location.reload();
+},9000));
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#175c36">
