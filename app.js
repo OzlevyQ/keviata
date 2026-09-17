@@ -94,39 +94,72 @@ async function cloudSaveProgress(dayId){
   try{await sb.from('user_progress').upsert({user_id:uid,item_key:dayId,completed:!!d.completed,completed_at:d.completed?new Date().toISOString():null,data:{slide:d.slide,totalSlides:d.totalSlides,scroll:d.scroll,updatedAt:d.updatedAt}})}catch(e){console.warn('progress save failed',e)}
 }
 function b64ToUint8(b64){const p='='.repeat((4-b64.length%4)%4);const raw=atob((b64+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
-async function pushEnable(){
-  if(!uid||!('serviceWorker' in navigator)||!('PushManager' in window))return false
+const pushSupported=()=>('Notification' in window)&&('PushManager' in window)&&('serviceWorker' in navigator)
+/* shared device-level enable: native permission + subscription, called only from a
+   direct user gesture. Product prefs stay separate per notification type. */
+async function ensurePush(){
+  if(!uid||!pushSupported())return null
   try{
     const perm=await Notification.requestPermission()
-    if(perm!=='granted')return false
+    if(perm!=='granted')return null
     const reg=await navigator.serviceWorker.ready
     const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToUint8(VAPID_PUBLIC)})
-    const j=sub.toJSON()
-    try{await sb.from('push_subscriptions').upsert({user_id:uid,endpoint:j.endpoint,keys:j.keys,opted_in:true,timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})}catch(e){console.warn('push save failed',e)}
-    return true
-  }catch(e){console.warn('push enable failed',e);return false}
+    return sub.toJSON()
+  }catch(e){console.warn('push subscribe failed',e);return null}
 }
-/* truthful reminder status: default = לא אושר, granted+on = מופעל, granted+off = כבוי,
-   denied = חסום במכשיר, unsupported = לא נתמך. Never show enabled without a real
-   granted permission and a live subscription. */
-async function refreshReminderStatus(){
-  const el=$('reminderStatus');if(!el)return
-  if(!('Notification' in window)||!('PushManager' in window)||!('serviceWorker' in navigator)){el.textContent='לא נתמך במכשיר';if(extras.settings.reminder){extras.settings.reminder=false;$('setReminder').checked=false;putExtras()}return}
-  const perm=Notification.permission
-  if(perm==='denied'){el.textContent='חסום במכשיר';return}
-  if(perm==='default'){el.textContent='לא אושר';return}
+async function savePushSubs(j){
+  try{await sb.from('push_subscriptions').upsert({user_id:uid,endpoint:j.endpoint,keys:j.keys,opted_in:!!(extras.settings.pubAlert||extras.settings.reminder),notify_publication:!!extras.settings.pubAlert,notify_reminder:!!extras.settings.reminder,reminder_time:extras.settings.studyTime||'20:00',timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})}catch(e){console.warn('push save failed',e)}
+}
+async function syncPushOff(){
   try{
     const reg=await navigator.serviceWorker.ready
     const sub=await reg.pushManager.getSubscription()
-    if(extras.settings.reminder&&sub){el.textContent='מופעל';return}
-    if(extras.settings.reminder&&!sub){extras.settings.reminder=false;$('setReminder').checked=false;putExtras();el.textContent='לא אושר';return}
-  }catch{}
-  el.textContent='כבוי'
+    if(!sub)return
+    if(!(extras.settings.pubAlert||extras.settings.reminder)){await sub.unsubscribe();if(uid)await sb.from('push_subscriptions').delete().eq('endpoint',sub.endpoint)}
+    else if(uid)await sb.from('push_subscriptions').upsert({user_id:uid,endpoint:sub.endpoint,keys:sub.toJSON().keys,opted_in:true,notify_publication:!!extras.settings.pubAlert,notify_reminder:!!extras.settings.reminder,reminder_time:extras.settings.studyTime||'20:00',timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})
+  }catch(e){console.warn('push off sync failed',e)}
 }
-async function pushDisable(){
-  try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription()
-    if(sub){await sub.unsubscribe();if(uid)await sb.from('push_subscriptions').delete().eq('endpoint',sub.endpoint)}}catch{}
+async function enablePushKind(kind){
+  const cb=kind==='pubAlert'?$('setPubAlert'):$('setReminder')
+  if(!pushSupported()){
+    cb.checked=false;extras.settings[kind]=false;putExtras();refreshPushStatuses()
+    showToast('במכשיר הזה אפשר לקבל התראות רק אחרי התקנת האפליקציה למסך הבית');return}
+  if(Notification.permission==='denied'){
+    cb.checked=false;extras.settings[kind]=false;putExtras();refreshPushStatuses()
+    showToast('ההתראות חסומות. יש לאפשר אותן בהגדרות האפליקציה או הדפדפן במכשיר, ואז לחזור לכאן');return}
+  const permBefore=Notification.permission
+  const j=await ensurePush()
+  if(!j){
+    cb.checked=false;extras.settings[kind]=false;putExtras();refreshPushStatuses()
+    if(Notification.permission==='granted'&&permBefore==='granted')showToast('ההפעלה נכשלה. נסו שוב בעוד רגע')
+    return}
+  extras.settings[kind]=true;putExtras()
+  await savePushSubs(j)
+  refreshPushStatuses();showToast(kind==='pubAlert'?'עדכוני הפרסום הופעלו':'התזכורת היומית הופעלה')
 }
+/* truthful per-type status: default = לא אושר, granted+on = מופעל, granted+off = כבוי,
+   denied = חסום במכשיר, unsupported = לא נתמך. Never show enabled without a real
+   granted permission and a live subscription. */
+async function refreshPushStatuses(){
+  const rows=[['pubStatus','pubAlert','setPubAlert'],['reminderStatus','reminder','setReminder']]
+  for(const [id,kind,cbId] of rows){
+    const el=$(id);if(!el)continue
+    if(!pushSupported()){
+      el.textContent='לא נתמך במכשיר'
+      if(extras.settings[kind]){extras.settings[kind]=false;$(cbId).checked=false;putExtras()}
+      continue}
+    const perm=Notification.permission
+    if(perm==='denied'){el.textContent='חסום במכשיר';continue}
+    if(perm==='default'){el.textContent='לא אושר';continue}
+    if(extras.settings[kind]){
+      let live=false
+      try{const reg=await navigator.serviceWorker.ready;live=!!(await reg.pushManager.getSubscription())}catch{}
+      if(live){el.textContent='מופעל';continue}
+      extras.settings[kind]=false;$(cbId).checked=false;putExtras();el.textContent='לא אושר';continue}
+    el.textContent='כבוי'
+  }
+}
+
 
 const $=id=>document.getElementById(id)
 const track=$('track'),stage=$('stage'),counter=$('counter'),fill=$('fill'),prevBtn=$('prevBtn'),nextBtn=$('nextBtn')
@@ -134,7 +167,7 @@ const reader=$('reader'),saveError=$('saveError'),toast=$('toast')
 
 let edition=null,archive=[],slides=[],N=0,idx=0
 let progress={version:1,days:{},streak:0,lastStudyDate:null}
-let extras={version:1,bookmarks:[],settings:{reminder:false,studyTime:'20:00',sounds:true,dark:false,textSize:'בינוני'},onboarded:false}
+let extras={version:1,bookmarks:[],settings:{pubAlert:false,reminder:false,studyTime:'20:00',sounds:true,dark:false,textSize:'בינוני'},onboarded:false}
 let profile={name:'אורח',pictureUrl:'',email:''}
 let saveTimer,deferredInstall,restoring=false,currentTab='home'
 const requestedDay=new URLSearchParams(location.search).get('date')
@@ -177,6 +210,7 @@ function showTab(name){currentTab=name
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===name))
   for(const k of Object.keys(TAB_NAMES))$('scr-'+k).hidden=k!==name
   if(name==='history')renderHistory()
+  if(name==='settings')refreshPushStatuses()
 }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab))
 $('avatarBtn').onclick=()=>showTab('profile')
@@ -303,7 +337,7 @@ $('achAll').onclick=e=>e.preventDefault();$('goalsAll').onclick=e=>e.preventDefa
 
 /* ---------- settings ---------- */
 function applySettings(){const s=extras.settings
-  $('setReminder').checked=!!s.reminder;$('setSounds').checked=!!s.sounds;$('setDark').checked=!!s.dark;refreshReminderStatus()
+  $('setReminder').checked=!!s.reminder;$('setPubAlert').checked=!!s.pubAlert;$('setSounds').checked=!!s.sounds;$('setDark').checked=!!s.dark;refreshPushStatuses()
   $('studyTimeVal').textContent=s.studyTime||'20:00';$('textSizeVal').textContent=s.textSize||'בינוני'
   document.body.classList.toggle('dark',!!s.dark)
   document.body.style.zoom=s.textSize==='קטן'?'0.94':s.textSize==='גדול'?'1.08':'1'
@@ -321,24 +355,14 @@ body.dark .ed-date{background:#17211c;color:#e9e4d6}
 body.dark .bar{background:#33463a}
 body.dark .mini-bar,body.dark .g-bar{background:#33463a}`;document.head.append(darkStyle)}
 $('setReminder').onchange=async e=>{
-  if(e.target.checked){
-    if(!('Notification' in window)||!('PushManager' in window)||!('serviceWorker' in navigator)){
-      e.target.checked=false;extras.settings.reminder=false;putExtras();refreshReminderStatus()
-      showToast('במכשיר הזה אפשר לקבל התראות רק אחרי התקנת האפליקציה למסך הבית');return}
-    if(Notification.permission==='denied'){
-      e.target.checked=false;extras.settings.reminder=false;putExtras();refreshReminderStatus()
-      showToast('ההתראות חסומות. יש לאפשר אותן בהגדרות האפליקציה או הדפדפן במכשיר, ואז לחזור לכאן');return}
-    const permBefore=Notification.permission
-    const ok=await pushEnable()
-    if(!ok){
-      e.target.checked=false;extras.settings.reminder=false;putExtras();refreshReminderStatus()
-      if(Notification.permission==='granted'&&permBefore==='granted')showToast('ההפעלה נכשלה. נסו שוב בעוד רגע')
-      return}
-    extras.settings.reminder=true;putExtras();refreshReminderStatus();showToast('התזכורת היומית הופעלה')}
-  else{await pushDisable();extras.settings.reminder=false;putExtras();refreshReminderStatus();showToast('התזכורת כבויה')}}
+  if(e.target.checked){await enablePushKind('reminder');return}
+  extras.settings.reminder=false;putExtras();await syncPushOff();refreshPushStatuses();showToast('התזכורת כבויה')}
+$('setPubAlert').onchange=async e=>{
+  if(e.target.checked){await enablePushKind('pubAlert');return}
+  extras.settings.pubAlert=false;putExtras();await syncPushOff();refreshPushStatuses();showToast('עדכוני הפרסום כבויים')}
 $('setSounds').onchange=e=>{extras.settings.sounds=e.target.checked;putExtras()}
 $('setDark').onchange=e=>{extras.settings.dark=e.target.checked;ensureDark();applySettings();putExtras()}
-document.querySelector('#scr-settings .set-row:nth-child(2)').onclick=()=>{const opts=['07:00','12:00','18:00','20:00','21:30'];const cur=extras.settings.studyTime||'20:00';const next=opts[(opts.indexOf(cur)+1)%opts.length];extras.settings.studyTime=next;applySettings();putExtras();showToast('שעת הלימוד: '+next)}
+$('studyTimeRow').onclick=()=>{const opts=['07:00','12:00','18:00','20:00','21:30'];const cur=extras.settings.studyTime||'20:00';const next=opts[(opts.indexOf(cur)+1)%opts.length];extras.settings.studyTime=next;applySettings();putExtras();showToast('שעת הלימוד: '+next);if(extras.settings.reminder){navigator.serviceWorker?.ready.then(r=>r.pushManager.getSubscription()).then(sub=>{if(sub)savePushSubs(sub.toJSON())}).catch(()=>{})}}
 document.querySelectorAll('#scr-settings .set-group')[2].querySelector('.set-row:nth-child(2)').onclick=()=>{const opts=['קטן','בינוני','גדול'];const cur=extras.settings.textSize||'בינוני';const next=opts[(opts.indexOf(cur)+1)%opts.length];extras.settings.textSize=next;applySettings();putExtras();showToast('גודל טקסט: '+next)}
 document.querySelectorAll('#scr-settings .set-group')[3].querySelector('.set-row:nth-child(1)').onclick=()=>showTab('profile')
 document.querySelectorAll('#scr-settings .set-group')[3].querySelector('.set-row:nth-child(2)').onclick=()=>showToast('ההתקדמות והשמורים מסונכרנים אוטומטית לחשבון שלך')
@@ -429,7 +453,8 @@ function openOnboarding(){
   const dlg=document.createElement('div');dlg.className='dlg';dlg.innerHTML=`<div class="dlg-card"><h2>מה תרצו לקבל?</h2>
   <p>אפשר להשתמש בקביעותא גם בלי שום התראה. כל אישור כאן נפרד, ואפשר לבטל אותו בכל רגע בהגדרות.</p>
   <div class="consent-row" style="text-align:right"><input type="checkbox" id="obEmail"><label for="obEmail">אני מאשר/ת לקבל במייל (${esc(profile.email||'')}) את הדף היומי, פעם ביום בלבד. אפשר לבטל בכל רגע.</label></div>
-  <div class="consent-row" style="text-align:right"><input type="checkbox" id="obPush"><label for="obPush">אני מאשר/ת תזכורת יומית בהתראות למכשיר הזה. אפשר לבטל בכל רגע.</label></div>
+  <div class="consent-row" style="text-align:right"><input type="checkbox" id="obPub"><label for="obPub">אני מאשר/ת התראה למכשיר הזה ברגע שיוצא פרסום יומי חדש. אפשר לבטל בכל רגע.</label></div>
+  <div class="consent-row" style="text-align:right"><input type="checkbox" id="obPush"><label for="obPush">אני מאשר/ת תזכורת לימוד יומית בהתראות למכשיר הזה, בשעה שאבחר. אפשר לבטל בכל רגע.</label></div>
   <div class="dlg-actions"><button class="btn" id="obSave" style="flex:1">שמירת הבחירות</button></div>
   <div class="dlg-actions"><button class="btn soft" id="obSkip" style="flex:1">להמשיך בלי התראות</button></div>
   <p class="finish-status" id="obStatus"></p></div>`
@@ -442,13 +467,18 @@ function openOnboarding(){
         if(dlg.querySelector('#obEmail').checked){
           await sb.from('email_subscriptions').upsert({user_id:uid,email:profile.email,subscribed:true,timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})
           $('emailOptin').checked=true;$('emailStatus').textContent='מנוי'}
-        if(dlg.querySelector('#obPush').checked){
-          const ok=await pushEnable()
-          if(ok){extras.settings.reminder=true;$('setReminder').checked=true}
+        const wantPub=dlg.querySelector('#obPub').checked,wantRem=dlg.querySelector('#obPush').checked
+        if(wantPub||wantRem){
+          const j=await ensurePush()
+          if(j){
+            if(wantPub){extras.settings.pubAlert=true;$('setPubAlert').checked=true}
+            if(wantRem){extras.settings.reminder=true;$('setReminder').checked=true}
+            await savePushSubs(j)}
           else showToast('המכשיר לא אישר התראות. אפשר להפעיל מאוחר יותר בהגדרות')}
       }catch{st.textContent='חלק מהשמירה נכשל. אפשר לנסות שוב מההגדרות.'}}
     extras.onboarded=true
     putExtras()
+    refreshPushStatuses()
     dlg.remove()
   }
   dlg.querySelector('#obSave').onclick=()=>done(true)
@@ -479,7 +509,7 @@ async function load(){
 }
 function network(){offlineBanner.hidden=navigator.onLine}
 addEventListener('online',()=>{network();save()});addEventListener('offline',network);network()
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshReminderStatus()})
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshPushStatuses()})
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('installRow').hidden=false})
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}))
 $('logoutBtn').onclick=logout
