@@ -9,7 +9,7 @@ const reader=$('reader'),saveError=$('saveError'),toast=$('toast')
 let edition=null,archive=[],slides=[],N=0,idx=0
 let progress={version:1,days:{},streak:0,lastStudyDate:null}
 let extras={version:1,bookmarks:[],settings:{reminder:true,studyTime:'20:00',sounds:true,dark:false,textSize:'בינוני'}}
-let profile={name:'',pictureUrl:'',email:''}
+let profile={name:'אורח',pictureUrl:'',email:''}
 let saveTimer,deferredInstall,restoring=false,currentTab='home'
 const requestedDay=new URLSearchParams(location.search).get('date')
 
