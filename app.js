@@ -57,7 +57,7 @@ $('avatarBtn').onclick=()=>showTab('profile')
 $('goProfile').onclick=()=>showTab('profile')
 
 /* ---------- data ---------- */
-async function getContent(){const day=requestedDay||'2026-09-17';const r=await fetch('/content/'+encodeURIComponent(day)+'.json');if(!r.ok)throw Error('content');return r.json()}
+async function getContent(){const day=requestedDay||'2026-09-17';const r=await fetch('content/'+encodeURIComponent(day)+'.json');if(!r.ok)throw Error('content');return r.json()}
 async function getArchive(){archive=edition?[edition]:[]}
 async function getExtras(){try{const d=JSON.parse(localStorage.getItem('keviata-demo-extras')||'null');if(d&&d.extras)extras={...extras,...d.extras,settings:{...extras.settings,...(d.extras.settings||{})}}}catch{}}
 async function putExtras(){try{localStorage.setItem('keviata-demo-extras',JSON.stringify({extras}))}catch{}}
@@ -85,13 +85,13 @@ function renderHome(){
 function edRowHtml(e,status){
   const d=progress.days?.[e.id],p=d?pctOf(d):0
   const sub=e.tag?`<span class="tagchip">${esc(e.tag)}</span>`:esc(e.hebrewDate||'')
-  return `<a class="ed-row" href="/?date=${encodeURIComponent(e.id)}" data-day="${esc(e.id)}">
+  return `<a class="ed-row" href="./?date=${encodeURIComponent(e.id)}" data-day="${esc(e.id)}">
     <span class="book-ic">${IC.book}</span>
     <span class="ed-main"><span class="ed-title">${esc(e.title)}</span><br><span class="ed-sub">${sub}</span></span>
     <span class="ed-date"><b>${esc(e.hebrewDate||'')}</b><br>${esc(e.displayDate||e.id)}</span>
     <span class="chev">‹</span></a>`
 }
-function bindEdRows(root){root.querySelectorAll('.ed-row').forEach(a=>a.onclick=ev=>{ev.preventDefault();const id=a.dataset.day;if(edition&&id===edition.id){openReader()}else location.assign('/?date='+encodeURIComponent(id))})}
+function bindEdRows(root){root.querySelectorAll('.ed-row').forEach(a=>a.onclick=ev=>{ev.preventDefault();const id=a.dataset.day;if(edition&&id===edition.id){openReader()}else location.assign('./?date='+encodeURIComponent(id))})}
 $('archiveAll').onclick=e=>{e.preventDefault();showTab('history')}
 $('openToday').onclick=()=>openReader()
 
@@ -109,7 +109,7 @@ function toggleBookmark(){if(!edition)return
   syncSaveBtn();renderProfile();renderHome();putExtras()}
 $('saveBtn').onclick=toggleBookmark
 $('readerSave').onclick=toggleBookmark
-$('shareBtn').onclick=async()=>{if(!edition)return;const data={title:'קביעותא · '+edition.title,text:edition.description||edition.title,url:location.origin+'/?date='+edition.id}
+$('shareBtn').onclick=async()=>{if(!edition)return;const data={title:'קביעותא · '+edition.title,text:edition.description||edition.title,url:new URL('./?date='+edition.id,location.href).href}
   try{if(navigator.share){await navigator.share(data)}else{await navigator.clipboard.writeText(data.url);showToast('הקישור הועתק')}}catch{}}
 $('continueBtn').onclick=()=>openReader()
 function updatePager(){const pos=(progress.days?.[edition?.id]?.slide??0)+1;$('pgLabel').textContent=pos+' / '+(N||20)
@@ -144,7 +144,7 @@ function renderHistoryList(){
     else if(d)pill=`<span class="status-pill part"><span class="sp-ic">${IC.pie}</span>${pctOf(d)}%<br>הושלם</span>`
     else if(saved)pill=`<span class="status-pill saved"><span class="sp-ic">${IC.bookmark}</span>נשמר</span>`
     else pill=`<span class="status-pill"><span class="sp-ic" style="background:var(--paper)">${IC.book}</span>טרם</span>`
-    return `<a class="ed-row" href="/?date=${encodeURIComponent(e.id)}" data-day="${esc(e.id)}">
+    return `<a class="ed-row" href="./?date=${encodeURIComponent(e.id)}" data-day="${esc(e.id)}">
       <span class="ed-main"><span class="ed-title">${esc(e.title)}</span><br><span class="ed-sub">${e.tag?`<span class="tagchip">${esc(e.tag)}</span> `:''}${esc(e.hebrewDate||'')}</span></span>
       <span class="ed-date"><b>${esc((e.hebrewDate||'').split(' ')[0]||'')}</b><br>${esc(e.displayDate||'')}</span>
       ${pill}</a>`}).join('')
@@ -207,7 +207,7 @@ $('installRow').onclick=async()=>{if(deferredInstall){deferredInstall.prompt();a
 /* privacy / delete dialog */
 function openPrivacy(){const dlg=document.createElement('div');dlg.className='dlg';dlg.innerHTML=`<div class="dlg-card"><h2>פרטיות וחשבון</h2>
   <p>הכניסה משמשת לזיהוי בלבד. ההתקדמות, השמורים והעדפות הדיוור נשמרים בחשבון שלך ואפשר למחוק אותם בכל רגע.</p>
-  <div class="dlg-actions"><a class="btn soft" href="/privacy.html" style="flex:1">מדיניות הפרטיות</a><button class="btn soft" id="dlgClose" style="flex:1">סגירה</button></div>
+  <div class="dlg-actions"><a class="btn soft" href="privacy.html" style="flex:1">מדיניות הפרטיות</a><button class="btn soft" id="dlgClose" style="flex:1">סגירה</button></div>
   <div class="dlg-actions"><button class="btn" id="dlgDelete" style="background:var(--danger);color:#fff;flex:1">מחיקת החשבון לצמיתות</button></div>
   <p class="finish-status" id="dlgStatus"></p></div>`
   document.body.append(dlg)
@@ -215,7 +215,7 @@ function openPrivacy(){const dlg=document.createElement('div');dlg.className='dl
   dlg.onclick=e=>{if(e.target===dlg)dlg.remove()}
   dlg.querySelector('#dlgDelete').onclick=async()=>{if(!confirm('למחוק את החשבון ואת כל ההתקדמות לצמיתות? אין אפשרות שחזור.'))return
     const st=dlg.querySelector('#dlgStatus');st.textContent='מוחקים את החשבון…'
-    try{localStorage.removeItem('keviata-demo-progress');localStorage.removeItem('keviata-demo-extras');location.replace('/')}catch{st.textContent='המחיקה לא הושלמה. נסו שוב.'}}}
+    try{localStorage.removeItem('keviata-demo-progress');localStorage.removeItem('keviata-demo-extras');location.replace('./')}catch{st.textContent='המחיקה לא הושלמה. נסו שוב.'}}}
 
 /* ---------- email opt-in ---------- */
 async function loadEmailPref(){$('emailStatus').textContent='לא פעיל בתצוגת הדמו'}
@@ -288,5 +288,5 @@ async function load(){
 function network(){offlineBanner.hidden=navigator.onLine}
 addEventListener('online',()=>{network();save()});addEventListener('offline',network);network()
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('installRow').hidden=false})
-if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))
-const u=await getUser();if(!u)location.replace('/login');else load()
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))
+const u=await getUser();if(!u)location.replace('login/');else load()

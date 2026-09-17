@@ -36,7 +36,7 @@
     },
     {
       "className": "slide-inner",
-      "html": "<span class=\"sec-tag\">3 · המקורות</span>\n    <h2 class=\"card-title\">שישה מקורות, מהתנ״ך ועד הרמב״ם</h2>\n    <p class=\"body-text\">כל מקור מופיע בלשונו, עם תרגום קצר ופירוש — וקישור למקור המלא בספרא.</p>\n    <figure class=\"figure\">\n      <img src=\"/images/vilna-shas-page.jpg\" alt=\"עמוד מתלמוד בבלי, מהדורת וילנא\" loading=\"lazy\">\n      <figcaption>עמוד מתלמוד בבלי, מהדורת וילנא (אלמנה ואחים ראם, 1897). צילום: משתמש Makshes, ספריית שניאורסון, מוסקבה · נחלת הכלל · <a href=\"https://commons.wikimedia.org/wiki/File:VilniusShasPage.jpg\">Wikimedia Commons</a></figcaption>\n    </figure>"
+      "html": "<span class=\"sec-tag\">3 · המקורות</span>\n    <h2 class=\"card-title\">שישה מקורות, מהתנ״ך ועד הרמב״ם</h2>\n    <p class=\"body-text\">כל מקור מופיע בלשונו, עם תרגום קצר ופירוש — וקישור למקור המלא בספרא.</p>\n    <figure class=\"figure\">\n      <img src=\"images/vilna-shas-page.jpg\" alt=\"עמוד מתלמוד בבלי, מהדורת וילנא\" loading=\"lazy\">\n      <figcaption>עמוד מתלמוד בבלי, מהדורת וילנא (אלמנה ואחים ראם, 1897). צילום: משתמש Makshes, ספריית שניאורסון, מוסקבה · נחלת הכלל · <a href=\"https://commons.wikimedia.org/wiki/File:VilniusShasPage.jpg\">Wikimedia Commons</a></figcaption>\n    </figure>"
     },
     {
       "className": "slide-inner",
