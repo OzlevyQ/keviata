@@ -67,7 +67,9 @@ const logout=async()=>{
 async function cloudLoad(){
   if(!uid)return
   try{
-    await sb.from('profiles').upsert({id:uid,display_name:profile.name,email:profile.email,picture_url:profile.pictureUrl,updated_at:new Date().toISOString()})
+    const pf=await sb.from('profiles').select('display_name,email,picture_url').eq('id',uid).maybeSingle()
+    if(pf.data&&pf.data.display_name&&pf.data.display_name!=='אורח')profile={name:pf.data.display_name,email:pf.data.email||profile.email,pictureUrl:pf.data.picture_url||profile.pictureUrl}
+    else await sb.from('profiles').upsert({id:uid,display_name:profile.name,email:profile.email,picture_url:profile.pictureUrl,updated_at:new Date().toISOString()})
     const st=await sb.from('user_settings').select('settings').eq('user_id',uid).maybeSingle()
     const pr=await sb.from('user_progress').select('item_key,completed,data')
     const s=st.data&&st.data.settings
@@ -422,7 +424,7 @@ async function load(){
   try{
     const record=await getContent()
     mount(record)
-    try{const d=JSON.parse(localStorage.getItem('keviata-demo-progress')||'null');if(d&&d.progress)progress=d.progress;if(d&&d.profile)profile=d.profile}catch{}
+    try{const d=JSON.parse(localStorage.getItem('keviata-demo-progress')||'null');if(d&&d.progress)progress=d.progress;if(d&&d.profile&&!uid)profile=d.profile}catch{}
     await Promise.all([getArchive(),getExtras(),loadEmailPref()])
     const d=progress.days?.[edition.id]
     if(d)idx=Math.max(0,Math.min(N-1,Number(d.slide)||0))
