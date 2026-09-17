@@ -1,1 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#14532d"/><text x="32" y="44" font-size="34" font-weight="bold" text-anchor="middle" fill="#f3efe2" font-family="serif">ק</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="קביעותא">
+  <rect width="512" height="512" rx="112" fill="#f5efe2"/>
+  <circle cx="256" cy="256" r="164" fill="#175c36"/>
+  <path d="M171 181c45 0 79 12 85 43 6-31 40-43 85-43v155c-42 0-72 9-85 37-13-28-43-37-85-37V181z" fill="#fffdf7"/>
+  <path d="M256 220v151" stroke="#b9862f" stroke-width="14" stroke-linecap="round"/>
+  <path d="M202 145h108" stroke="#b9862f" stroke-width="18" stroke-linecap="round"/>
+</svg>
