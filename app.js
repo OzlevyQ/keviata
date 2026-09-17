@@ -119,7 +119,13 @@ async function syncPushOff(){
     else if(uid)await sb.from('push_subscriptions').upsert({user_id:uid,endpoint:sub.endpoint,keys:sub.toJSON().keys,opted_in:true,notify_publication:!!extras.settings.pubAlert,notify_reminder:!!extras.settings.reminder,reminder_time:extras.settings.studyTime||'20:00',timezone:'Asia/Jerusalem',updated_at:new Date().toISOString()})
   }catch(e){console.warn('push off sync failed',e)}
 }
+let pushBusy=false
 async function enablePushKind(kind){
+  if(pushBusy)return
+  pushBusy=true
+  try{await enablePushKindInner(kind)}finally{pushBusy=false}
+}
+async function enablePushKindInner(kind){
   const cb=kind==='pubAlert'?$('setPubAlert'):$('setReminder')
   if(!pushSupported()){
     cb.checked=false;extras.settings[kind]=false;putExtras();refreshPushStatuses()
@@ -361,6 +367,7 @@ $('setPubAlert').onchange=async e=>{
   if(e.target.checked){await enablePushKind('pubAlert');return}
   extras.settings.pubAlert=false;putExtras();await syncPushOff();refreshPushStatuses();showToast('עדכוני הפרסום כבויים')}
 $('setSounds').onchange=e=>{extras.settings.sounds=e.target.checked;putExtras()}
+document.querySelectorAll('.set-row').forEach(r=>{const inp=r.querySelector('.switch input');if(inp)r.addEventListener('click',e=>{if(e.target.closest('.switch'))return;inp.click()})})
 $('setDark').onchange=e=>{extras.settings.dark=e.target.checked;ensureDark();applySettings();putExtras()}
 $('studyTimeRow').onclick=()=>{const opts=['07:00','12:00','18:00','20:00','21:30'];const cur=extras.settings.studyTime||'20:00';const next=opts[(opts.indexOf(cur)+1)%opts.length];extras.settings.studyTime=next;applySettings();putExtras();showToast('שעת הלימוד: '+next);if(extras.settings.reminder){navigator.serviceWorker?.ready.then(r=>r.pushManager.getSubscription()).then(sub=>{if(sub)savePushSubs(sub.toJSON())}).catch(()=>{})}}
 document.querySelectorAll('#scr-settings .set-group')[2].querySelector('.set-row:nth-child(2)').onclick=()=>{const opts=['קטן','בינוני','גדול'];const cur=extras.settings.textSize||'בינוני';const next=opts[(opts.indexOf(cur)+1)%opts.length];extras.settings.textSize=next;applySettings();putExtras();showToast('גודל טקסט: '+next)}
@@ -425,8 +432,8 @@ function setDrag(off){const W=stage.clientWidth,cur=slides[idx];cur.style.transi
 function endDrag(commit){const W=stage.clientWidth,dir=dx>0?1:-1,cur=slides[idx],t=dragTarget;cur.style.transition='transform .22s ease';if(t)t.style.transition='transform .22s ease'
   if(commit&&t){cur.style.transform='translateX('+(dir*W)+'px)';t.style.transform='translateX(0)';setTimeout(()=>{cur.style.transition='';cur.style.transform='';t.style.transition='';t.style.transform='';dragTarget=null;go(dir)},230)}
   else{cur.style.transform='translateX(0)';if(t)t.style.transform='translateX('+(-dir*W)+'px)';setTimeout(()=>{cur.style.transition='';cur.style.transform='';if(t){t.style.transition='';t.style.transform='';t.hidden=true}dragTarget=null},230)}}
-stage.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;dx=0;mode=null},{passive:true})
-stage.addEventListener('touchmove',e=>{const t=e.touches[0],ddx=t.clientX-x0,ddy=t.clientY-y0;if(!mode)mode=Math.abs(ddx)>Math.abs(ddy)&&Math.abs(ddx)>8?'h':'v';if(mode==='h'){e.preventDefault();dx=ddx;const atEdge=(dx>0&&idx===N-1)||(dx<0&&idx===0);setDrag(atEdge?dx*.35:dx)}},{passive:false})
+stage.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;dx=0;mode=e.target.closest('button,a,input,label,select,textarea,[role=button]')?'tap':null},{passive:true})
+stage.addEventListener('touchmove',e=>{const t=e.touches[0],ddx=t.clientX-x0,ddy=t.clientY-y0;if(!mode)mode=Math.abs(ddx)>Math.abs(ddy)&&Math.abs(ddx)>12?'h':'v';if(mode==='h'){e.preventDefault();dx=ddx;const atEdge=(dx>0&&idx===N-1)||(dx<0&&idx===0);setDrag(atEdge?dx*.35:dx)}},{passive:false})
 stage.addEventListener('touchend',()=>{if(mode==='h'){const W=stage.clientWidth,dir=dx>0?1:-1,commit=Math.abs(dx)>Math.max(56,W*.22)&&((dir===1&&idx<N-1)||(dir===-1&&idx>0));endDrag(commit)}mode=null;dx=0})
 function openReader(){if(!edition)return;reader.hidden=false;document.body.style.overflow='hidden';render()}
 function closeReader(){reader.hidden=true;document.body.style.overflow='';showTab(currentTab);renderHome();renderLearn();renderProfile()}
