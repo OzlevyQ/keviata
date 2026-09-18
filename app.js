@@ -221,6 +221,7 @@ function showTab(name){currentTab=name
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab))
 $('avatarBtn').onclick=()=>showTab('profile')
 $('goProfile').onclick=()=>showTab('profile')
+$('adminRow').onclick=()=>{location.assign('admin/')}
 
 /* ---------- data ---------- */
 function ilToday(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}catch{return new Date().toISOString().slice(0,10)}}
@@ -352,6 +353,7 @@ function renderProfile(){
   $('pSaved').textContent=(extras.bookmarks||[]).length
   $('pStreak').textContent=progress.streak||0
   $('pAvg').textContent=avgPct()+'%'
+  const adminRow=$('adminRow');if(adminRow)adminRow.hidden=(profile.email||'').trim().toLowerCase()!=='ozlevy9@gmail.com'
   $('streakNum').textContent=progress.streak||0
   const days=dayEntries().length,bm=(extras.bookmarks||[]).length,streak=progress.streak||0
   const ach=[

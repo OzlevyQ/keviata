@@ -1,0 +1,71 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><meta name="theme-color" content="#14261f"><meta name="robots" content="noindex,nofollow"><link rel="apple-touch-icon" href="../icons/apple-touch-icon.png"><title>ניהול · קביעותא</title><link rel="icon" href="../favicon.svg"><style>
+*{box-sizing:border-box}
+:root{--green-deep:#14261f;--green:#14532d;--paper:#f6f1e6;--card:#fffdf7;--line:#ddd3bd;--muted:#5d6d65;--ink:#20302a;--bad:#8c2f22;--ok:#1d6b3a}
+body{margin:0;min-height:100dvh;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.mark{width:46px;height:46px;border-radius:14px;background:var(--green-deep);color:#fff;display:grid;place-items:center;font:700 26px serif;flex:none}
+.top h1{font:900 24px serif;color:var(--green-deep);margin:0}
+.top .sub{color:var(--muted);font-size:13px;margin:0}
+.top .sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--green);border-radius:12px;padding:9px 14px;font:700 14px system-ui;cursor:pointer}
+.btn:active{background:#f1efe8}
+.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.note{color:var(--muted);font-size:12.5px;margin:2px 0 16px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 10px 30px #20302a10}
+.stat b{display:block;font:900 26px system-ui;color:var(--green-deep)}
+.stat span{font-size:12.5px;color:var(--muted)}
+.stat .ok{color:var(--ok)} .stat .bad{color:var(--bad)}
+h2{font:800 17px system-ui;color:var(--green-deep);margin:22px 0 10px}
+.pill{display:inline-block;border-radius:99px;padding:3px 11px;font:700 12px system-ui}
+.pill.ok{background:#e2f0e5;color:var(--ok)} .pill.bad{background:#f6e3df;color:var(--bad)} .pill.mid{background:#f3ecd7;color:#7a6414}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px}
+tr:last-child td{border-bottom:0}
+.tblwrap{overflow-x:auto}
+.center{display:grid;place-items:center;min-height:70dvh;text-align:center}
+.center .card{max-width:420px;width:100%;padding:30px 24px}
+.center h1{font:900 22px serif;color:var(--green-deep);margin:0 0 8px}
+.center p{color:var(--muted);margin:0 0 18px;font-size:14.5px}
+.err{color:var(--bad);font-size:13.5px;margin-top:10px}
+.muted-row td{color:var(--muted)}
+.back{display:inline-block;margin-top:16px;color:var(--green);font:600 13.5px system-ui;text-decoration:none}
+@media(max-width:520px){.top h1{font-size:20px}.stat b{font-size:22px}th:nth-child(3),td:nth-child(3){display:none}}
+</style></head><body>
+<div class="wrap" id="dashRoot" hidden>
+  <div class="top">
+    <div class="mark">ק</div>
+    <div><h1>ניהול קביעותא</h1><p class="sub" id="snapLine">…</p></div>
+    <div class="sp"></div>
+    <button class="btn" id="refreshBtn" type="button">רענון</button>
+  </div>
+
+  <h2>סטטוס היום</h2>
+  <div class="grid" id="statusGrid"></div>
+
+  <h2>מנויים והתראות</h2>
+  <div class="grid" id="subGrid"></div>
+
+  <h2>לומדים</h2>
+  <div class="grid" id="learnGrid"></div>
+
+  <h2>מהדורות</h2>
+  <div class="card tblwrap"><table>
+    <thead><tr><th>תאריך</th><th>כותרת</th><th>תאריך עברי</th><th>שקופיות</th><th>התחילו</th><th>השלימו</th></tr></thead>
+    <tbody id="edRows"></tbody>
+  </table></div>
+  <a class="back" href="../">‹ חזרה לאפליקציה</a>
+</div>
+
+<div class="center" id="gateRoot" hidden><div class="card">
+  <h1 id="gateTitle">…</h1>
+  <p id="gateMsg">…</p>
+  <div id="gateBtns"></div>
+  <div class="err" id="gateErr"></div>
+</div></div>
+
+<script src="https://unpkg.com/@descope/web-js-sdk@1.53.1/dist/index.umd.js"></script>
+<script src="admin.js"></script>
+</body></html>
