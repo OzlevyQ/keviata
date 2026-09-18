@@ -401,7 +401,7 @@ $('studyTimeRow').onclick=()=>{const opts=['07:00','12:00','18:00','20:00','21:3
 document.querySelectorAll('#scr-settings .set-group')[2].querySelector('.set-row:nth-child(2)').onclick=()=>{const opts=['קטן','בינוני','גדול'];const cur=extras.settings.textSize||'בינוני';const next=opts[(opts.indexOf(cur)+1)%opts.length];extras.settings.textSize=next;applySettings();putExtras();showToast('גודל טקסט: '+next)}
 document.querySelectorAll('#scr-settings .set-group')[3].querySelector('.set-row:nth-child(1)').onclick=()=>showTab('profile')
 document.querySelectorAll('#scr-settings .set-group')[3].querySelector('.set-row:nth-child(2)').onclick=()=>showToast('ההתקדמות והשמורים מסונכרנים אוטומטית לחשבון שלך')
-document.querySelectorAll('#scr-settings .set-group')[3].querySelector('.set-row:last-child').onclick=()=>openPrivacy()
+$('privacyRow').onclick=()=>openPrivacy()
 $('installRow').onclick=async()=>{if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;$('installRow').hidden=true}}
 
 /* privacy / delete dialog */
