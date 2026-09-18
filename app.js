@@ -1,6 +1,6 @@
 /* Keviata live build: Descope Google auth + Supabase persistence */
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
-window.__KEVIATA_BUILD='live-2'
+window.__KEVIATA_BUILD='live-3'
 
 /* recover clients stuck on a mixed old-demo/new-live cache state */
 async function healMixedBuild(){
@@ -223,8 +223,34 @@ $('avatarBtn').onclick=()=>showTab('profile')
 $('goProfile').onclick=()=>showTab('profile')
 
 /* ---------- data ---------- */
-async function getContent(){const day=requestedDay||'2026-09-17';const r=await fetch('content/'+encodeURIComponent(day)+'.json');if(!r.ok)throw Error('content');return r.json()}
-async function getArchive(){archive=edition?[edition]:[]}
+function ilToday(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}catch{return new Date().toISOString().slice(0,10)}}
+/* content source of truth: Supabase daily_content (immutable editions).
+   fallback order: Supabase row -> legacy static file -> localStorage cache (offline) */
+async function getContent(){
+  const day=requestedDay||ilToday()
+  try{
+    const {data,error}=await sb.from('daily_content').select('payload').eq('content_date',day).maybeSingle()
+    if(!error&&data&&data.payload){try{localStorage.setItem('keviata-content-'+day,JSON.stringify(data.payload))}catch{};return data.payload}
+  }catch(e){console.warn('daily_content read failed',e)}
+  try{
+    const r=await fetch('content/'+encodeURIComponent(day)+'.json')
+    if(r.ok){const j=await r.json();try{localStorage.setItem('keviata-content-'+day,JSON.stringify(j))}catch{};return j}
+  }catch(e){console.warn('static content read failed',e)}
+  try{const c=JSON.parse(localStorage.getItem('keviata-content-'+day)||'null');if(c)return c}catch{}
+  throw Error('content')
+}
+async function getArchive(){
+  try{
+    const {data,error}=await sb.from('daily_content').select('content_date,payload').order('content_date',{ascending:false}).limit(30)
+    if(!error&&data&&data.length){
+      archive=data.map(r=>({...r.payload,id:(r.payload&&r.payload.id)||r.content_date}))
+      try{localStorage.setItem('keviata-archive',JSON.stringify(archive))}catch{}
+      return
+    }
+  }catch(e){console.warn('archive read failed',e)}
+  try{const c=JSON.parse(localStorage.getItem('keviata-archive')||'null');if(c&&c.length){archive=c;return}}catch{}
+  archive=edition?[edition]:[]
+}
 async function getExtras(){try{const d=JSON.parse(localStorage.getItem('keviata-demo-extras')||'null');if(d&&d.extras)extras={...extras,...d.extras,settings:{...extras.settings,...(d.extras.settings||{})}}}catch{}}
 async function putExtras(){try{localStorage.setItem('keviata-demo-extras',JSON.stringify({extras}))}catch{}cloudSaveSettings()}
 
@@ -527,6 +553,14 @@ if(!dSdk){healMixedBuild()}
 else{
 const u=await Promise.race([getUser(),new Promise(r=>setTimeout(()=>r('__timeout'),10000))])
 if(u==='__timeout'){console.warn('session restore timed out');showToast('בעיית חיבור - מנסים שוב');setTimeout(()=>location.reload(),2500)}
-else if(!u)location.replace('login/')
+else if(!u){
+  /* distinguish no-network (render local cache) from logged-out (go to login) */
+  let online=false
+  try{const r=await Promise.race([fetch(SB_URL+'/rest/v1/',{method:'HEAD',cache:'no-store'}),new Promise((_,rej)=>setTimeout(rej,4000))]);online=!!r}catch{}
+  let hasLocal=false
+  try{const d=JSON.parse(localStorage.getItem('keviata-demo-progress')||'null');hasLocal=!!(d&&(d.profile||d.progress))}catch{}
+  if(!online&&hasLocal){console.warn('offline: rendering from local cache');load()}
+  else location.replace('login/')
+}
 else{profile={name:u.name,email:u.email,pictureUrl:u.pictureUrl};load();cloudLoad().then(()=>{renderHome();renderLearn();renderProfile();applySettings();setTimeout(openOnboarding,600)})}
 }
