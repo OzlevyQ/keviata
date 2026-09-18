@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-09-18",
+  "publishedAt": "2026-09-18T06:10:00+03:00",
+  "status": "published",
+  "locale": "he",
+  "direction": "rtl",
+  "hebrewDate": "ז׳ בתשרי תשפ״ז",
+  "displayDate": "18.9.26",
+  "title": "מי משלם על הענן?",
+  "description": "לימוד יומי על התנגדות מקומית למרכזי נתונים של AI, ועל אחריות לנזק צפוי לפי התורה, המשנה, התלמוד ורש״י.",
+  "slides": [
+    {
+      "className": "slide-inner",
+      "html": "<div class=\"kicker\">לימוד יומי · עשרת ימי תשובה</div><h1>מי משלם על הענן?</h1><p class=\"sub\">מרכזי הנתונים של הבינה המלאכותית מבטיחים חדשנות, הכנסות ועבודות. תושבים בסן חוזה שואלים מי יישא בחשמל, במים, ברעש ובסיכון. המקורות היהודיים מציעים מבחן פשוט: בנייה טובה מתחילה באחריות לנזק שהיא עלולה להעביר לשכן.</p><div class=\"teshuva-banner\">בעשרת ימי תשובה לא בודקים רק כוונות. בודקים גם את טביעת הרגל שהמעשים שלנו משאירים אצל אחרים.</div><p class=\"swipe-hint\"><span class=\"arr\">→</span> החליקו ימינה להתחיל · 20 כרטיסים</p>"
+    },
+    {
+      "className": "slide-inner center-vert",
+      "html": "<span class=\"sec-tag\">1 · מה קרה</span><p class=\"body-text\">ב־17 בספטמבר דיווחה Reuters כי תושבים וארגוני סביבה בסן חוזה מתארגנים נגד גל מרכזי נתונים שהעיר מבקשת למשוך כחלק מתשתית ה־AI.</p><p class=\"body-text\">הוויכוח אינו רק \"טכנולוגיה בעד או נגד\". העיר מצפה להכנסות ממסים; התושבים דורשים לדעת מה יקרה למחירי החשמל, למים, לזיהום ולאיכות החיים.</p>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">1 · המספרים</span><h2 class=\"card-title\">כששרת אחד מקבל קנה מידה של עיר</h2><p class=\"body-text\">KQED דיווחה כי מתקן בינוני עשוי לצרוך 20–40 מגה־ואט. שלוש תוכניות באזור אלביסו מתוארות בהספקים של 250, 99 ו־496 מגה־ואט.</p><p class=\"body-text\">אלה נתוני הספק מתוכנן, לא הוכחה לצריכה רציפה בפועל. אבל הם מראים למה שאלת התשתית המקומית הפכה פוליטית.</p>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">1 · התמונה הרחבה</span><h2 class=\"card-title\">הביקוש אינו דמיוני</h2><p class=\"body-text\">עדכון של Lawrence Berkeley National Laboratory מעריך שמרכזי נתונים צרכו בארה״ב 192 TWh ב־2024, כ־4.7% מהחשמל במדינה.</p><p class=\"body-text\">תרחיש הייחוס שלו ל־2030 הוא 649 TWh, כ־11.8% מהחשמל החזוי בארה״ב; טווח אי־הוודאות רחב, 521–843 TWh.</p>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">2 · למה זה חשוב</span><h2 class=\"card-title\">חדשנות יכולה להיות אמיתית, וגם המחיר שלה</h2><p class=\"body-text\">מרכז נתונים יכול להביא מסים, תשתית ועבודה. הוא גם יכול להעמיס על רשת החשמל, להשתמש במים ולפזר עלויות אל הציבור.</p><p class=\"body-text\">המבחן המוסרי אינו אם הפרויקט \"חדשני\". המבחן הוא האם מי שנהנה ממנו נושא גם בעלויותיו, והאם מי שעלול להיפגע שותף בהחלטה.</p>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">2 · שלוש זוויות</span><ul class=\"takeaways\"><li><b>היזם:</b> בלי תשתית אין AI בקנה מידה גדול.</li><li><b>השכן:</b> זכות קניין אינה רישיון להעביר רעש, זיהום או סיכון מעבר לגדר.</li><li><b>העיר:</b> עליה לשקול תועלת ציבורית מול נזק מצטבר, ולא רק עסקה בודדת.</li></ul>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">3 · תנ״ך</span><h2 class=\"card-title\">המעקה קודם לנפילה</h2><blockquote class=\"source-quote\">״כִּי תִבְנֶה בַּיִת חָדָשׁ וְעָשִׂיתָ מַעֲקֶה לְגַגֶּךָ, וְלֹא תָשִׂים דָּמִים בְּבֵיתֶךָ, כִּי יִפֹּל הַנֹּפֵל מִמֶּנּוּ.״</blockquote><p class=\"explain\"><b>דברים כב, ח.</b> תרגום פשוט: כשבונים בית חדש, מתקינים מראש מחסום שמונע נפילה. האחריות מתחילה בתכנון, לא אחרי האסון.</p><a class=\"src-link\" href=\"https://www.sefaria.org/Deuteronomy.22.8?lang=bi\">המקור בספרא ⇗</a>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">3 · משנה</span><h2 class=\"card-title\">גם בתוך הרשות שלי יש גבול</h2><blockquote class=\"source-quote\">״לֹא יִפְתַּח אָדָם חֲנוּת שֶׁל נַחְתּוֹמִין וְשֶׁל צַבָּעִין תַּחַת אוֹצָרוֹ שֶׁל חֲבֵרוֹ... חֲנוּת שֶׁבֶּחָצֵר, יָכוֹל לִמְחוֹת בְּיָדוֹ וְלוֹמַר לוֹ: אֵינִי יָכוֹל לִישֹׁן מִקּוֹל הַנִּכְנָסִין וּמִקּוֹל הַיּוֹצְאִין.״</blockquote><p class=\"explain\"><b>משנה בבא בתרא ב, ג.</b> עסק מותר אינו פטור מבדיקת חום, ריח ורעש שהוא מעביר לאחר.</p><a class=\"src-link\" href=\"https://www.sefaria.org/Mishnah_Bava_Batra.2.3?lang=bi\">המקור בספרא ⇗</a>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">3 · קריאה שנייה</span><h2 class=\"card-title\">לא כל מטרד נשקל באותו אופן</h2><p class=\"body-text\">המשנה עצמה מבחינה בין שימושים. היא אינה מכריזה שכל רעש אסור או שכל עסק מותר.</p><p class=\"body-text\">זו קריאה נגד סיסמאות: צריך למדוד את סוג הנזק, העוצמה, השכנים, התועלת והחלופות. האחריות דורשת פרטים.</p>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">3 · תלמוד</span><h2 class=\"card-title\">אחריות גם לשרשרת עקיפה</h2><blockquote class=\"source-quote\">״מַרְחִיקִין אֶת הַסּוּלָּם מִן הַשּׁוֹבָךְ אַרְבַּע אַמּוֹת, כְּדֵי שֶׁלֹּא תִּקְפּוֹץ הַנְּמִיָּיה.״</blockquote><p class=\"explain\"><b>בבא בתרא כב ע״ב.</b> תרגום: מרחיקים סולם משובך השכן כדי שנמייה לא תשתמש בו לקפיצה ותפגע ביונים. הסולם לא מזיק בעצמו; הוא יוצר מסלול צפוי לנזק.</p><a class=\"src-link\" href=\"https://www.sefaria.org/Bava_Batra.22b.10?lang=bi\">המקור בספרא ⇗</a>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">3 · רש״י</span><h2 class=\"card-title\">הגבול עובר בין שתי חצרות</h2><blockquote class=\"source-quote\">״אם יש לזה שובך בחצירו סמוך לכותל שבין שתי החצירות, וחבירו בא להעמיד סולם בחצירו אצל הכותל, ירחיקנו מן השובך ארבע אמות.״</blockquote><p class=\"explain\"><b>רש״י על בבא בתרא כב ע״ב.</b> רש״י מחדד: הסולם נמצא בחצרו של בעליו, ובכל זאת המיקום שלו כפוף לנזק הצפוי בחצר האחר.</p><a class=\"src-link\" href=\"https://www.sefaria.org/Rashi_on_Bava_Batra.22b.10.1?lang=bi\">רש״י בספרא ⇗</a>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">3 · תנ״ך</span><h2 class=\"card-title\">השכן אינו נתון חיצוני</h2><blockquote class=\"source-quote\">״וְאָהַבְתָּ לְרֵעֲךָ כָּמוֹךָ, אֲנִי ה׳.״</blockquote><p class=\"explain\"><b>ויקרא יט, יח.</b> תרגום מעשי בהקשר שלנו: אל תחשב רק מה המערכת עושה בשבילך. הכנס לחישוב גם את האדם שחי ליד התשתית שמפעילה אותה.</p><a class=\"src-link\" href=\"https://www.sefaria.org/Leviticus.19.18?lang=bi\">המקור בספרא ⇗</a>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">4 · מחלוקת לשם בירור</span><h2 class=\"card-title\">האם נכון לעצור?</h2><p class=\"body-text\"><b>גישה אחת:</b> כשאין שקיפות מספקת לגבי מים, חשמל ובריאות, עקרון המעקה דורש האטה או מורטוריום.</p><p class=\"body-text\"><b>גישה שנייה:</b> המשנה אינה אוסרת כל מלאכה. אפשר להתיר בנייה עם מדידה, תשלום מלא על תשתית, מים ממוחזרים, מגבלות רעש ובקרה ציבורית.</p>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">4 · נקודת האיזון</span><h2 class=\"card-title\">לא \"כן או לא\", אלא \"באילו תנאים\"</h2><ul class=\"takeaways\"><li>פרסום נתוני חשמל, מים, גנרטורים ורעש.</li><li>הוכחה שהמתקן משלם את מלוא עלות החיבור והתשתית.</li><li>בדיקת השפעה מצטברת, לא רק כל פרויקט לבדו.</li><li>מנגנון תלונה, תיקון ואכיפה לאחר ההקמה.</li></ul>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">5 · לחיים שלנו</span><h2 class=\"card-title\">גם שימוש דיגיטלי נשען על מקום פיזי</h2><p class=\"body-text\">כל שאילתה, גיבוי ותמונה בענן עוברים דרך שרתים, חשמל, קירור וכבלים. אין צורך להפסיק להשתמש. יש צורך להפסיק לדמיין שהשימוש חסר חומר.</p><p class=\"body-text\">כשבוחרים שירות או בונים מוצר, אפשר לשאול: מה נמדד? מי נושא בעלות? ומה יקרה כשהשימוש יגדל פי עשרה?</p>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">5 · בעבודה</span><h2 class=\"card-title\">מבחן \"המעקה\" לפני השקה</h2><ol class=\"steps\"><li>כתבו תועלת אחת שהמערכת מביאה.</li><li>כתבו נזק עקיף אחד שהיא עלולה להעביר לאחר.</li><li>הגדירו מדד שמזהה את הנזק מוקדם.</li><li>קבעו מי מוסמך לעצור או לתקן.</li></ol><p class=\"body-text\">זה נכון לתשתית AI, וגם לאוטומציה קטנה, שינוי ארגוני או מוצר פיננסי.</p>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">6 · שאלות לחשבון נפש</span><div class=\"questions\"><p>איזו נוחות שלי נשענת על עלות שמישהו אחר כמעט לא רואה?</p><p>איפה אני אומר \"זה בשטח שלי\" במקום לבדוק מה חוצה את הגבול?</p><p>איזה מעקה קטן אפשר להתקין לפני שהבעיה נהפכת לנזק?</p></div>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">6 · פעולה להיום</span><h2 class=\"card-title\">בדיקת טביעת רגל אחת</h2><div class=\"action\">בחרו שירות AI אחד שאתם משתמשים בו בעבודה. חפשו בדף הקיימות או התשתית שלו נתון אחד על אנרגיה, מים או פליטות. אם אין נתון ברור, רשמו לעצמכם שהיעדר השקיפות הוא עצמו מידע.</div><p class=\"body-text\">המטרה אינה אשמה. המטרה היא לעבור מצריכה עיוורת לאחריות מדויקת.</p>"
+    },
+    {
+      "className": "slide-inner",
+      "html": "<span class=\"sec-tag\">7 · מקורות ועדכונים</span><ul class=\"links-list\"><li><a href=\"https://www.reuters.com/business/silicon-valley-ai-data-center-boom-meets-local-resistance-2026-09-17/\">Reuters — In Silicon Valley, AI data center boom meets local resistance</a><span class=\"src-note\">17 בספטמבר 2026 · חדשות</span></li><li><a href=\"https://www.kqed.org/news/12099195/full-on-backlash-against-data-centers-occurring-as-san-jose-courts-them\">KQED — Full-on backlash against data centers</a><span class=\"src-note\">14 בספטמבר 2026 · דיווח מקומי</span></li><li><a href=\"https://www.energy.gov/documents/united-states-data-center-energy-usage-report-2025-update\">LBNL / U.S. DOE — United States Data Center Energy Usage Report: 2025 Update</a><span class=\"src-note\">מחקר רשמי · נתוני 2024 ותחזית 2030</span></li><li><a href=\"https://www.iea.org/reports/key-questions-on-energy-and-ai/executive-summary\">IEA — Key Questions on Energy and AI</a><span class=\"src-note\">ניתוח אנרגיה בינלאומי</span></li><li><a href=\"https://cnr.ncsu.edu/news/2026/09/data-center-boom-water-resources/\">NC State — Data center boom and local water resources</a><span class=\"src-note\">3 בספטמבר 2026 · מים ותכנון</span></li></ul><footer class=\"attrib\"><p>טקסטי התנ״ך, המשנה, התלמוד ורש״י אומתו מול Sefaria. נוסחי התנ״ך: מקרא על פי המסורה; משנה: תורת אמת; תלמוד ורש״י: מהדורת וילנא / William Davidson לפי רישיון המקור. התרגומים והפירושים נכתבו לדף זה. כתבות ומחקרים מסוכמים בקצרה ונשארים בבעלות מפרסמיהם.</p><p>קביעותא · נערך ב־18 בספטמבר 2026.</p></footer><p class=\"fixed-note\">דף זה קבוע ליום ז׳ בתשרי תשפ״ז ולא ישתנה לאחר פרסומו.</p>"
+    },
+    {
+      "className": "slide-inner completion-inner",
+      "html": "<div class=\"completion-mark\" aria-hidden=\"true\">✓</div><span class=\"sec-tag gold\">סיימת את הלימוד היומי</span><h2 class=\"card-title\">כל הכבוד, השלמת את קביעותא להיום</h2><p class=\"sub\">ההתקדמות שלך תישמר בחשבון האישי לפני החזרה לעמוד הבית.</p><div class=\"completion-summary\" aria-label=\"סיכום ההתקדמות\"><div class=\"stat\"><b id=\"finishPercent\">100%</b><span>הושלם</span></div><div class=\"stat\"><b id=\"finishCards\">20</b><span>כרטיסים</span></div><div class=\"stat\"><b id=\"finishStreak\">1</b><span>רצף ימים</span></div></div><button class=\"finish-btn\" id=\"finishBtn\" type=\"button\">סיימתי להיום וחזרה לעמוד הבית</button><p class=\"finish-status\" id=\"finishStatus\" aria-live=\"polite\"></p>"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.reuters.com/business/silicon-valley-ai-data-center-boom-meets-local-resistance-2026-09-17/"
+    },
+    {
+      "url": "https://www.kqed.org/news/12099195/full-on-backlash-against-data-centers-occurring-as-san-jose-courts-them"
+    },
+    {
+      "url": "https://www.energy.gov/documents/united-states-data-center-energy-usage-report-2025-update"
+    },
+    {
+      "url": "https://www.iea.org/reports/key-questions-on-energy-and-ai/executive-summary"
+    },
+    {
+      "url": "https://cnr.ncsu.edu/news/2026/09/data-center-boom-water-resources/"
+    },
+    {
+      "url": "https://www.sefaria.org/Deuteronomy.22.8?lang=bi"
+    },
+    {
+      "url": "https://www.sefaria.org/Mishnah_Bava_Batra.2.3?lang=bi"
+    },
+    {
+      "url": "https://www.sefaria.org/Bava_Batra.22b.10?lang=bi"
+    },
+    {
+      "url": "https://www.sefaria.org/Rashi_on_Bava_Batra.22b.10.1?lang=bi"
+    },
+    {
+      "url": "https://www.sefaria.org/Leviticus.19.18?lang=bi"
+    }
+  ]
+}
